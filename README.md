@@ -54,6 +54,26 @@ Current tests cover:
 - retry/backoff behavior and max-retry failures,
 - local snapshot fallback behavior,
 - pipeline output + archive artifact generation.
+- fundamentals bronze ingestion shape detection/validation/persistence.
+- silver fundamentals feature loading for downstream model features.
+
+---
+
+## Bronze fundamentals ingestion
+
+Run standalone:
+
+```bash
+python pipeline/ingest_fundamentals.py
+```
+
+This script:
+
+- auto-detects combined input shape from `fundamentals_raw.json` (list or dict),
+- validates required valuation/income/cashflow/balance sheet fields,
+- computes derived metrics (FCF, D/E, margin, YoY revenue growth),
+- writes per-ticker files under `bronze/{TICKER}_fundamentals_{YYYY-MM-DD}.json`,
+- appends warning-heavy tickers to `bronze/flagged_{YYYY-MM-DD}.json`.
 
 ### Practical reliability test cases
 
