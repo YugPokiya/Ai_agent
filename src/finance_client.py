@@ -2,16 +2,65 @@
 
 from __future__ import annotations
 
+import random
+import time
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import pandas as pd
 import yfinance as yf
 
 
+class DataFetchError(RuntimeError):
+    """Raised when a company snapshot cannot be fetched after retries."""
+
+    def __init__(self, ticker: str, attempts: int, last_error: Exception):
+        self.ticker = ticker
+        self.attempts = attempts
+        self.last_error = last_error
+        super().__init__(f"{ticker} fetch failed after {attempts} attempts: {last_error}")
+
+
 class FinanceClient:
     """Fetch company fundamentals and statements from Yahoo Finance."""
 
+    def __init__(
+        self,
+        max_retries: int = 3,
+        base_delay_seconds: float = 1.0,
+        backoff_multiplier: float = 2.0,
+        max_jitter_seconds: float = 0.25,
+    ) -> None:
+        self.max_retries = max_retries
+        self.base_delay_seconds = base_delay_seconds
+        self.backoff_multiplier = backoff_multiplier
+        self.max_jitter_seconds = max_jitter_seconds
+
     def fetch_company_snapshot(self, ticker: str) -> Dict[str, Any]:
+        last_error: Exception | None = None
+
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                snapshot = self._fetch_snapshot_once(ticker)
+                snapshot["fetch_metadata"] = {
+                    "status": "success",
+                    "attempt_count": attempt,
+                    "source": "yfinance",
+                    "fetched_at_utc": datetime.now(timezone.utc).isoformat(),
+                }
+                return snapshot
+            except Exception as exc:
+                last_error = exc
+                if attempt == self.max_retries:
+                    break
+                delay_seconds = (self.base_delay_seconds * (self.backoff_multiplier ** (attempt - 1))) + random.uniform(
+                    0, self.max_jitter_seconds
+                )
+                time.sleep(delay_seconds)
+
+        raise DataFetchError(ticker=ticker, attempts=self.max_retries, last_error=last_error or RuntimeError("unknown error"))
+
+    def _fetch_snapshot_once(self, ticker: str) -> Dict[str, Any]:
         stock = yf.Ticker(ticker)
         info = stock.info or {}
 

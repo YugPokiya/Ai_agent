@@ -12,6 +12,7 @@ Stage 1 focuses on:
    - Size bucket (`large`, `mid`, `small`)
    - Sub-vertical (`cybersec`, `ml`, `database_as_service`, `paas`, `iaas`, `lidar`, `quantum_computing`, `computer_vision`)
 5. Persisting normalized outputs into separate machine-readable JSON files.
+6. Applying retry + backoff fetch resilience and producing a per-run reliability summary.
 
 ---
 
@@ -28,6 +29,7 @@ Generated outputs:
 
 - `data/output/companies_raw.json`
 - `data/output/companies_by_category.json`
+- `data/output/pipeline_run_summary.json`
 
 ---
 
