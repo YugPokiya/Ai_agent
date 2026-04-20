@@ -12,6 +12,8 @@ Stage 1 focuses on:
    - Size bucket (`large`, `mid`, `small`)
    - Sub-vertical (`cybersec`, `ml`, `database_as_service`, `paas`, `iaas`, `lidar`, `quantum_computing`, `computer_vision`)
 5. Persisting normalized outputs into separate machine-readable JSON files.
+6. Applying retry + backoff fetch resilience and producing a per-run reliability summary.
+7. Falling back to the latest local daily snapshot cache when primary source retrieval fails repeatedly.
 
 ---
 
@@ -28,6 +30,45 @@ Generated outputs:
 
 - `data/output/companies_raw.json`
 - `data/output/companies_by_category.json`
+- `data/output/pipeline_run_summary.json`
+
+Daily versioned run artifacts are also stored under:
+
+- `data/archive/YYYY-MM-DD/run_HHMMSS/raw_snapshots.json`
+- `data/archive/YYYY-MM-DD/run_HHMMSS/normalized_records.json`
+- `data/archive/YYYY-MM-DD/run_HHMMSS/grouped_records.json`
+- `data/archive/YYYY-MM-DD/run_HHMMSS/run_summary.json`
+
+---
+
+## Testing (real-world oriented)
+
+### Automated tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Current tests cover:
+
+- retry/backoff behavior and max-retry failures,
+- local snapshot fallback behavior,
+- pipeline output + archive artifact generation.
+
+### Practical reliability test cases
+
+Use these scenarios to validate production-like behavior:
+
+1. **Transient source outage**  
+   Force temporary request failures and confirm retries recover before max attempts.
+2. **Hard source outage**  
+   Block outbound Yahoo access and verify fallback loads latest local snapshot.
+3. **No fallback available**  
+   Start with empty `data/archive` and confirm failed tickers are reported in `pipeline_run_summary.json`.
+4. **Freshness monitoring**  
+   Verify `fetch_metadata.as_of_utc`, `fetch_duration_seconds`, and per-run timestamps are present for observability.
+5. **Daily archival continuity**  
+   Run pipeline across multiple days and validate folder-per-day/run versioning under `data/archive/`.
 
 ---
 
