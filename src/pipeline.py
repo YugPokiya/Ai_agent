@@ -27,6 +27,7 @@ def run_pipeline() -> None:
     run_date_dir = ARCHIVE_DIR / run_started_at.strftime("%Y-%m-%d")
     run_dir = run_date_dir / f"run_{run_started_at.strftime('%H%M%S')}"
     run_dir.mkdir(parents=True, exist_ok=True)
+    run_started_at = datetime.now(timezone.utc)
 
     companies = as_dicts()
     client = FinanceClient()
@@ -65,6 +66,14 @@ def run_pipeline() -> None:
                     }
                 )
             )
+            fetch_results.append(
+                {
+                    "ticker": ticker,
+                    "status": "success",
+                    "attempt_count": snapshot.get("fetch_metadata", {}).get("attempt_count"),
+                    "error": None,
+                }
+            )
         except DataFetchError as exc:
             fetch_results.append(
                 {
@@ -74,6 +83,7 @@ def run_pipeline() -> None:
                     "attempt_count": exc.attempts,
                     "fetch_duration_seconds": None,
                     "as_of_utc": None,
+                    "attempt_count": exc.attempts,
                     "error": str(exc.last_error),
                 }
             )

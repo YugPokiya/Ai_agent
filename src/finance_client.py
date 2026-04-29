@@ -9,6 +9,9 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+import random
+import time
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import pandas as pd
@@ -51,6 +54,16 @@ class LocalSnapshotStore:
         return None
 
 
+class DataFetchError(RuntimeError):
+    """Raised when a company snapshot cannot be fetched after retries."""
+
+    def __init__(self, ticker: str, attempts: int, last_error: Exception):
+        self.ticker = ticker
+        self.attempts = attempts
+        self.last_error = last_error
+        super().__init__(f"{ticker} fetch failed after {attempts} attempts: {last_error}")
+
+
 class FinanceClient:
     """Fetch company fundamentals and statements from Yahoo Finance."""
 
@@ -77,6 +90,13 @@ class FinanceClient:
         for attempt in range(1, self.max_retries + 1):
             try:
                 snapshot = self._fetch_with_timeout(ticker)
+
+    def fetch_company_snapshot(self, ticker: str) -> Dict[str, Any]:
+        last_error: Exception | None = None
+
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                snapshot = self._fetch_snapshot_once(ticker)
                 snapshot["fetch_metadata"] = {
                     "status": "success",
                     "attempt_count": attempt,
@@ -141,6 +161,8 @@ class FinanceClient:
         if error is not None:
             raise error
         return result
+
+        raise DataFetchError(ticker=ticker, attempts=self.max_retries, last_error=last_error or RuntimeError("unknown error"))
 
     def _fetch_snapshot_once(self, ticker: str) -> Dict[str, Any]:
         stock = yf.Ticker(ticker)
