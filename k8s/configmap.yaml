@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: portfolio-api-config
+data:
+  APP_ENV: kubernetes
+  APP_NAME: python-backend-portfolio
+  AWS_REGION: us-east-1

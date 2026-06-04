@@ -1,0 +1,42 @@
+services:
+  api:
+    build: .
+    command: uvicorn backend_project.fastapi_app:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      APP_ENV: docker
+      DATABASE_URL: postgresql://portfolio:portfolio@postgres:5432/portfolio
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+
+  flask-admin:
+    build: .
+    command: flask --app backend_project.flask_app run --host 0.0.0.0 --port 5000
+    environment:
+      APP_ENV: docker
+      DATABASE_URL: postgresql://portfolio:portfolio@postgres:5432/portfolio
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: portfolio
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres:/docker-entrypoint-initdb.d:ro
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
