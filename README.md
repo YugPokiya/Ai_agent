@@ -17,6 +17,43 @@ Stage 1 focuses on:
 
 ---
 
+## Python Backend Portfolio Project
+
+This repo now includes a runnable backend portfolio project that demonstrates the stack requested for a Python developer role:
+
+- **FastAPI** public API in `backend_project/fastapi_app.py` with `/health`, `/profile`, `/skills`, and `/projects` endpoints.
+- **Flask** admin-style API in `backend_project/flask_app.py` for lightweight profile and project access.
+- **Django** adapter in `backend_project/django_resume/` for teams that prefer Django settings, URLs, and JSON views.
+- Shared domain and repository code in `backend_project/portfolio/` so all frameworks expose the same profile, skills, and projects.
+- **PostgreSQL** schema in `postgres/001_create_portfolio_schema.sql`.
+- **Redis** configuration through `REDIS_URL` for cache/queue integration.
+- **Docker** and Docker Compose files for local API, Flask admin, PostgreSQL, and Redis services.
+- **Kubernetes** manifests in `k8s/` and an **AWS ECS Fargate** task definition in `aws/`.
+
+### Run the FastAPI service locally
+
+```bash
+pip install -r requirements.txt
+uvicorn backend_project.fastapi_app:app --reload
+```
+
+### Run the full Docker stack
+
+```bash
+docker compose up --build
+```
+
+FastAPI is available at `http://localhost:8000`, and the Flask adapter is available at `http://localhost:5000`.
+
+### Run the Django adapter
+
+```bash
+python manage.py runserver
+```
+
+Django exposes `/health` and `/profile` using the shared backend portfolio repository.
+
+
 ## Quick start
 
 ```bash
