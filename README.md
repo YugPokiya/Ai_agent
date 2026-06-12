@@ -29,6 +29,7 @@ This repo now includes a runnable backend portfolio project that demonstrates th
 - **Redis** configuration through `REDIS_URL` for cache/queue integration.
 - **Docker** and Docker Compose files for local API, Flask admin, PostgreSQL, and Redis services.
 - **Kubernetes** manifests in `k8s/` and an **AWS ECS Fargate** task definition in `aws/`.
+- **Resume OCR classifier** in `backend_project/resume_ocr/` with FastAPI endpoints for classifying raw resume text or base64 encoded text/PDF/image resumes by content.
 
 ### Run the FastAPI service locally
 
@@ -52,6 +53,32 @@ python manage.py runserver
 ```
 
 Django exposes `/health` and `/profile` using the shared backend portfolio repository.
+
+### Resume OCR classification API
+
+The FastAPI service includes a resume parser/classifier that can classify resumes into categories such as software engineering, data science/ML, cloud/DevOps, cybersecurity, product management, finance/accounting, sales/marketing, and healthcare.
+
+Classify raw resume text:
+
+```bash
+curl -X POST http://localhost:8000/resume/classify \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Python backend engineer with FastAPI, Django, PostgreSQL, Docker, and Kubernetes experience"}'
+```
+
+Classify a base64 encoded resume file:
+
+```bash
+python - <<'PY'
+import base64
+from pathlib import Path
+
+path = Path("resume.pdf")
+print({"filename": path.name, "file_base64": base64.b64encode(path.read_bytes()).decode("ascii")})
+PY
+```
+
+Supported file inputs are `.txt`, `.md`, `.csv`, `.pdf`, `.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`, and `.bmp`. PDF parsing uses `pypdf`; image OCR uses `Pillow`, `pytesseract`, and the Tesseract system binary.
 
 
 ## Quick start
